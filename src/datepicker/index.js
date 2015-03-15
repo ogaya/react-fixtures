@@ -4,12 +4,10 @@ import Hover from '../abstract/hover';
 import Constants from '../constants';
  
 let style= {
-    base: Immutable.Map({
-        fontFamily: Constants.fontFamily
-    }),
     table: Immutable.Map({
         borderCollapse:"separate",
         borderSpacing: "0px",
+        fontFamily: Constants.fontFamily,
         border: "1px solid #ccc"
     }),
     td: Immutable.Map({
@@ -29,7 +27,11 @@ let style= {
     selectTd: Immutable.Map({
         border: "1px solid #ccc",
         backgroundColor:"#CFF"
-    })
+    }),
+    otherMonthTd: Immutable.Map({
+        color: "#AAA"
+    }),
+
 };
 
 let now = new Date();
@@ -63,24 +65,27 @@ let DayPanel = React.createClass({
         return {
             week: 0,
             column: 0,
-            date: now,
-            selectDate: now,
+            shownDate: now,
+            selectedDate: now,
             onSelectDate: function(val){},
         };
     },
     _onClick(){
-        let date = getDate(this.props.date, this.props.week, this.props.column);
+        let date = getDate(this.props.shownDate, this.props.week, this.props.column);
         this.props.onSelectDate(date);
     },
     _getTdStyle(){
-        let date = getDate(this.props.date, this.props.week, this.props.column);
+        let date = getDate(this.props.shownDate, this.props.week, this.props.column);
         let hoverStyle = style.td.merge(this.state.hoverd ? style.hoverTd : {});
-        let tdStyle = hoverStyle.merge(
-            equalDate(this.props.selectDate, date) ? style.selectTd : {});
+        let selectStyle = hoverStyle.merge(
+            equalDate(this.props.selectedDate, date) ? style.selectTd : {});
+        let isOtherMonth = (date.getMonth() != this.props.shownDate.getMonth())
+
+        let tdStyle = selectStyle.merge(isOtherMonth ? style.otherMonthTd : {});
         return tdStyle;
     },
     render: function() {
-        let date = getDate(this.props.date, this.props.week, this.props.column);
+        let date = getDate(this.props.shownDate, this.props.week, this.props.column);
         return (
             <td style={this._getTdStyle().toJS()} onClick={this._onClick} 
                 onMouseEnter={this.onHover} onMouseLeave={this.onUnhover}>
@@ -94,15 +99,16 @@ let WeekLine = React.createClass({
     getDefaultProps() {
         return {
             week: 0,
-            date: now,
-            selectDate: now,
+            shownDate: now,
+            selectedDate: now,
             onSelectDate: function(val){}
         };
     },
     render: function() {
         let dayPanels = Immutable.Range(0, 6).map(column =>
             <DayPanel key={column} week={this.props.week} column={column}
-            date={this.props.date} selectDate={this.props.selectDate} onSelectDate={this.props.onSelectDate}/>);
+            shownDate={this.props.showndate} selectedDate={this.props.selectedDate} 
+            onSelectDate={this.props.onSelectDate}/>);
         return (
             <tr>
                 {dayPanels} 
@@ -114,13 +120,13 @@ let WeekLine = React.createClass({
 let TitleArea = React.createClass({
     getInitialState: function () {
         return { 
-            date: now
+            shownDate: now
         };
     },
     render: function() {
         return (
             <div>
-                {this.state.date.toLocaleDateString("ja-JP")}
+                {this.state.shownDate.toLocaleDateString("ja-JP")}
             </div>
         );
     }
@@ -129,19 +135,21 @@ let TitleArea = React.createClass({
 let DatePicker = React.createClass({
     getInitialState: function () {
         return { 
-            date: now,
-            selectDate: now
+            // 表示中日時のデータ
+            shownDate: new Date(),
+            // 選択中日時のデータ
+            selectedDate: new Date()
         };
     },
     _onSelectDate(val){
-        this.setState({selectDate: val});
+        this.setState({selectedDate: val});
     },
     render: function() {
         let weekLines = Immutable.Range(0, 6).map(week =>
-            <WeekLine key={week} week={week} date={this.state.date} 
-            selectDate={this.state.selectDate} onSelectDate={this._onSelectDate}/>);
+            <WeekLine key={week} week={week} shownDate={this.state.shownDate} 
+            selectedDate={this.state.selectedDate} onSelectDate={this._onSelectDate}/>);
         return (
-            <div style={style.base}>
+            <div>
                 <TitleArea />
                 <table style={style.table.toJS()}>
                     {weekLines} 
