@@ -1,8 +1,9 @@
-import React from 'react';
-import Immutable from 'immutable';
-import Hover from '../abstract/hover';
-import Constants from '../constants';
- 
+import React        from 'react';
+import Immutable    from 'immutable';
+import Hover        from '../abstract/hover';
+import Constants    from '../constants';
+import Header       from './header';
+
 let style= {
     table: Immutable.Map({
         borderCollapse:"separate",
@@ -117,21 +118,6 @@ let WeekLine = React.createClass({
     }
 });
 
-let TitleArea = React.createClass({
-    getInitialState: function () {
-        return { 
-            shownDate: now
-        };
-    },
-    render: function() {
-        return (
-            <div>
-                {this.state.shownDate.toLocaleDateString("ja-JP")}
-            </div>
-        );
-    }
-});
-
 let DatePicker = React.createClass({
     getInitialState: function () {
         return { 
@@ -144,13 +130,16 @@ let DatePicker = React.createClass({
     _onSelectDate(val){
         this.setState({selectedDate: val});
     },
+    _onShownDateChange(val){
+        this.setState({shownDate: val});
+    },
     render: function() {
         let weekLines = Immutable.Range(0, 6).map(week =>
             <WeekLine key={week} week={week} shownDate={this.state.shownDate} 
             selectedDate={this.state.selectedDate} onSelectDate={this._onSelectDate}/>);
         return (
             <div>
-                <TitleArea />
+                <Header shownDate={this.state.shownDate} onShownDateChange={this._onShownDateChange}/>
                 <table style={style.table.toJS()}>
                     {weekLines} 
                 </table>
